@@ -6,6 +6,10 @@ If the target file exists and is a symbolic link, then the symbolic link itself,
 
 This program requires Java >= 8 to run.
 
+[Download JAR →](download/file-rotate.7z)
+
+[Download OpenJDK Java from OpenLogic →](https://www.openlogic.com/openjdk-downloads)
+
 ## Author
 
 ```
@@ -71,7 +75,7 @@ file-rotate log.txt -f {YYYY}-{MM}-{DD}-{full}
 ```
 
 ```
-    file-rotate log.txt -d {YYYY}-{MM}/{DD} -f {name}_{hh}{mm}{ss}_{ms}{ext}
+file-rotate log.txt -d {YYYY}-{MM}/{DD} -f {name}_{hh}{mm}{ss}_{ms}{ext}
 ```
 
 ```

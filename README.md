@@ -6,7 +6,7 @@ If the target file exists and is a symbolic link, then the symbolic link itself,
 
 This program requires Java >= 8 to run.
 
-[Download JAR →](download/file-rotate.7z)
+[Download JAR →](https://github.com/zoltraks/java-file-rotate/raw/main/download/file-rotate.7z)
 
 [Download OpenJDK Java from OpenLogic →](https://www.openlogic.com/openjdk-downloads)
 

@@ -186,6 +186,10 @@ public class App implements Runnable {
                 case "-d":
                     parameterName = "directory";
                     continue;
+                case "--format":
+                case "-f":
+                    parameterName = "format";
+                    continue;
                 case "--verbose":
                 case "-v":
                     this.optionVerbose = true;

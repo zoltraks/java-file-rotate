@@ -2,7 +2,6 @@ package pl.alyx.utility.file_rotate;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -11,14 +10,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 public class App implements Runnable {
     final String[] args;
     private boolean optionVerbose;
     private boolean optionRelative;
     private boolean optionModified;
     private boolean optionAccessed;
+    private boolean optionPretend;
     private List<String> arguments = new ArrayList<>();
     private List<String> excludes = new ArrayList<>();
     private List<String> files = new ArrayList<>();
@@ -55,6 +53,7 @@ public class App implements Runnable {
         Matcher m = p.matcher(format);
         StringBuffer sb = new StringBuffer();
         DateTimeFormatter formatter;
+        Instant time = bag.time;
         while (m.find()) {
             String replacement = null;
             String group = m.group(1);
@@ -79,49 +78,49 @@ public class App implements Runnable {
                 case "YEAR":
                     formatter = DateTimeFormatter.ofPattern("yyyy");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "MM":
                 case "MONTH":
                     formatter = DateTimeFormatter.ofPattern("MM");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "DD":
                 case "DAY":
                     formatter = DateTimeFormatter.ofPattern("dd");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "hh":
                 case "HOUR":
                     formatter = DateTimeFormatter.ofPattern("HH");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "mm":
                 case "MINUTE":
                     formatter = DateTimeFormatter.ofPattern("mm");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "ss":
                 case "SECOND":
                     formatter = DateTimeFormatter.ofPattern("ss");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "ms":
                 case "MILLISECOND":
                     formatter = DateTimeFormatter.ofPattern("SSS");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 case "ns":
                 case "NANOSECOND":
                     formatter = DateTimeFormatter.ofPattern("n");
                     formatter = formatter.withZone(ZoneId.systemDefault());
-                    replacement = formatter.format(bag.instant);
+                    replacement = formatter.format(time);
                     break;
                 default:
                     throw new Exception(String.format("Unknown placeholder {%s}", group));
@@ -161,8 +160,7 @@ public class App implements Runnable {
                         default:
                             throw new Exception(String.format("Argument handler for %s not present", parameterName));
                     }
-                }
-                finally {
+                } finally {
                     parameterName = "";
                 }
             }
@@ -205,6 +203,10 @@ public class App implements Runnable {
                 case "--accessed":
                 case "-a":
                     this.optionAccessed = true;
+                    continue;
+                case "--pretend":
+                case "-p":
+                    this.optionPretend = true;
                     continue;
                 default:
                     if (arg.startsWith("-")) {
@@ -257,7 +259,20 @@ public class App implements Runnable {
 
     private boolean moveFiles() throws Exception {
         boolean success = true;
+        if (this.optionPretend) {
+            System.out.println("Moving files...");
+        }
         for (String file : this.files) {
+            if (this.optionPretend) {
+                Bag bag = createBag(Paths.get(file));
+                System.out.println(String.format("File %s will be moved as %s to %s",
+                        bag.path.getFileName(),
+                        formatName(format, bag, 0),
+                        formatName(directory, bag, 0),
+                        null
+                ));
+                continue;
+            }
             if (!moveFile(file)) {
                 success = false;
             }
@@ -271,26 +286,7 @@ public class App implements Runnable {
             String directory = this.directory;
 
             Path path = Paths.get(file);
-            String base = path.getParent().toString();
-            String full = path.getFileName().toString();
-            String name = full;
-            String ext = "";
-            if (full.contains(".")) {
-                int p = full.lastIndexOf(".");
-                name = full.substring(0, p);
-                ext = full.substring(p);
-            }
-
-            Bag bag = new Bag();
-            bag.name = name;
-            bag.ext = ext;
-            bag.instant = Instant.now();
-            bag.directory = base;
-
-            if (optionModified) {
-                BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
-                bag.instant = attr.lastModifiedTime().toInstant();
-            }
+            Bag bag = createBag(path);
 
             directory = createDirectory(directory, bag);
 
@@ -318,7 +314,7 @@ public class App implements Runnable {
             if (this.optionVerbose) {
                 System.out.println(String.format("Moving file %s to %s", file, Paths.get(directory, destination)));
             }
-            Path source = Paths.get(file);
+            Path source = path;
             Path target = Paths.get(directory, destination);
             try {
                 Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
@@ -329,7 +325,7 @@ public class App implements Runnable {
                 }
             }
             return true;
-        } catch (IOException|SecurityException x) {
+        } catch (IOException | SecurityException x) {
             System.out.println(x.getMessage());
             if (optionVerbose) {
                 x.printStackTrace();
@@ -338,6 +334,36 @@ public class App implements Runnable {
         } catch (Exception x) {
             throw x;
         }
+    }
+
+    private Bag createBag(Path path) throws IOException {
+        String base = path.getParent().toString();
+        String full = path.getFileName().toString();
+        String name = full;
+        String ext = "";
+        if (full.contains(".")) {
+            int p = full.lastIndexOf(".");
+            name = full.substring(0, p);
+            ext = full.substring(p);
+        }
+
+        Bag bag = new Bag();
+        bag.path = path;
+        bag.name = name;
+        bag.ext = ext;
+        bag.time = Instant.now();
+        bag.directory = base;
+
+        if (false) {
+        } else if (optionAccessed) {
+            bag.time = bag.getAccessTime();
+        } else if (optionModified) {
+            bag.time = bag.getModifiedTime();
+        } else {
+            bag.time = Instant.now();
+        }
+
+        return bag;
     }
 
     private String createDirectory(String directory, Bag bag) throws Exception {
@@ -408,6 +434,7 @@ public class App implements Runnable {
         System.out.println("    -r, --relative   Use destination directory relative to file location");
         System.out.println("    -m, --modified   Use file last modification time for DATE/TIME placeholders");
         System.out.println("    -a, --accesssed  Use file last accessed time for DATE/TIME placeholders");
+        System.out.println("    -p, --pretend    Only print what is going to happen");
         System.out.println("    -V, --version    Print version information");
         System.out.println("    -h, --help       Print this screen");
         System.out.println("");

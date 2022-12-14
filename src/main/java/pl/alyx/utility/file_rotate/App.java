@@ -17,9 +17,9 @@ public class App implements Runnable {
     private boolean optionModified;
     private boolean optionAccessed;
     private boolean optionPretend;
-    private List<String> arguments = new ArrayList<>();
-    private List<String> excludes = new ArrayList<>();
-    private List<String> files = new ArrayList<>();
+    private final List<String> arguments = new ArrayList<>();
+    private final List<String> excludes = new ArrayList<>();
+    private final List<String> files = new ArrayList<>();
     private String format = "{name}.{i}{ext}";
     private String directory = "";
     private boolean parameterFormat;
@@ -265,12 +265,12 @@ public class App implements Runnable {
         for (String file : this.files) {
             if (this.optionPretend) {
                 Bag bag = createBag(Paths.get(file));
-                System.out.println(String.format("File %s will be moved as %s to %s",
+                System.out.printf("File %s will be moved as %s to %s%n",
                         bag.path.getFileName(),
                         formatName(format, bag, 0),
                         formatName(directory, bag, 0),
                         null
-                ));
+                );
                 continue;
             }
             if (!moveFile(file)) {
@@ -282,7 +282,7 @@ public class App implements Runnable {
 
     private boolean moveFile(String file) throws Exception {
         try {
-            String destination = "";
+            String destination;
             String directory = this.directory;
 
             Path path = Paths.get(file);
@@ -314,14 +314,13 @@ public class App implements Runnable {
             if (this.optionVerbose) {
                 System.out.println(String.format("Moving file %s to %s", file, Paths.get(directory, destination)));
             }
-            Path source = path;
             Path target = Paths.get(directory, destination);
             try {
-                Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                Files.move(path, target, StandardCopyOption.ATOMIC_MOVE);
             } catch (AtomicMoveNotSupportedException _AtomicMoveNotSupportedException) {
                 if (optionVerbose) {
                     System.out.println("ATOMIC_MOVE not supported for this move, falling back to non atomic");
-                    Files.move(source, target);
+                    Files.move(path, target);
                 }
             }
             return true;

@@ -13,7 +13,7 @@ This program requires Java >= 8 to run.
 ## Author
 
 ```
-Filip Golewski 2022
+Filip Golewski 2022-2023
 ```
 
 ## Usage
@@ -59,6 +59,14 @@ Destination directory and filename format options can use following placeholders
     {ss},{SECOND}       2-digit second
     {ms},{MILLISECOND}  3-digit milisecond
     {ns},{NANOSECOND}   9-digit nanosecond
+
+## Wildcards
+
+Wildcards are supported only in file names.
+
+```
+file-rotate *.log
+```
 
 ## Example
 

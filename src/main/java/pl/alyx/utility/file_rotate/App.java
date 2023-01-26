@@ -1,5 +1,6 @@
 package pl.alyx.utility.file_rotate;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.Instant;
@@ -246,7 +247,24 @@ public class App implements Runnable {
                 }
             }
             if (Utility.hasWildcards(search)) {
-                throw new Exception("Wildcards are not supported");
+                String home = new File(search).getParent();
+                if (home == null) {
+                    home = Paths.get("").toAbsolutePath().toString();
+                } else {
+                    home = FileSystems.getDefault().getPath(home).normalize().toAbsolutePath().toString();
+                }
+                if (Utility.hasWildcards(home)) {
+                    throw new Exception("Wildcards are not supported in directory names");
+                }
+                String expression = Utility.wildToExpression(new File(search).getName());
+                for (final File entry : new File(home).listFiles()) {
+                    if (entry.isFile()) {
+                        String name = entry.getName();
+                        if (name.matches(expression)) {
+                            this.files.add(Paths.get(home, name).toString());
+                        }
+                    }
+                }
             }
         }
         if (this.optionVerbose) {
@@ -369,9 +387,6 @@ public class App implements Runnable {
         String current = directory;
         if (current.length() == 0) {
             current = FileSystems.getDefault().getPath(".").normalize().toAbsolutePath().toString();
-            if (this.optionVerbose) {
-                System.out.println(String.format("Using current directory %s", current));
-            }
         } else {
             if (current.contains("{")) {
                 current = formatName(current, bag, 0);
@@ -415,7 +430,7 @@ public class App implements Runnable {
         System.out.println("");
         System.out.println("AUTHOR");
         System.out.println("");
-        System.out.println("    Filip Golewski 2022");
+        System.out.println("    Filip Golewski 2022 2023");
         System.out.println("");
         System.out.println("USAGE");
         System.out.println("");

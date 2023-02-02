@@ -14,15 +14,18 @@ import java.util.regex.Pattern;
 public class App implements Runnable {
 
     final String[] args;
+
     private boolean optionVerbose;
     private boolean optionRelative;
+    private boolean optionKeep;
     private boolean optionModified;
     private boolean optionAccessed;
     private boolean optionPretend;
+
     private final List<String> arguments = new ArrayList<>();
     private final List<String> excludes = new ArrayList<>();
     private final List<String> files = new ArrayList<>();
-    private String format = "{name}.{i}{ext}";
+    private String format = Global.DEFAULT_FORMAT;
     private String directory = "";
     private boolean parameterFormat;
 
@@ -198,6 +201,10 @@ public class App implements Runnable {
                 case "-r":
                     this.optionRelative = true;
                     continue;
+                case "--keep":
+                case "-k":
+                    this.optionKeep = true;
+                    continue;
                 case "--modified":
                 case "-m":
                     this.optionModified = true;
@@ -240,12 +247,18 @@ public class App implements Runnable {
             if (!Utility.hasWildcards(search)) {
                 String absolutePath = FileSystems.getDefault().getPath(search).normalize().toAbsolutePath().toString();
                 Path path = Paths.get(absolutePath);
-                if (Files.exists(path) && Files.isRegularFile(path)) {
-                    if (!this.files.contains(absolutePath)) {
-                        this.files.add(absolutePath);
+                if (Files.exists(path)) {
+                    if (Files.isRegularFile(path)) {
+                        if (!this.files.contains(absolutePath)) {
+                            this.files.add(absolutePath);
+                        }
+                    } else if (this.optionVerbose) {
+                        System.out.printf("File exists but is not regular %s%n", path);
                     }
-                    continue;
+                } else if (this.optionVerbose) {
+                    System.out.printf("File not found %s%n", path);
                 }
+                continue;
             }
             if (Utility.hasWildcards(search)) {
                 String home = new File(search).getParent();
@@ -284,10 +297,15 @@ public class App implements Runnable {
         for (String file : this.files) {
             if (this.optionPretend) {
                 Bag bag = createBag(Paths.get(file));
-                System.out.printf("File %s will be moved as %s to %s%n",
+                String destinationDirectory = "current directory";
+                if (Utility.isNotEmpty(this.directory)) {
+                    destinationDirectory = bag.outputDirectory;
+                }
+                String destinationFile = selectDestinationFile(bag);
+                System.out.printf("File %s will be moved to %s as %s%n",
                         bag.path.getFileName(),
-                        formatName(format, bag, 0),
-                        formatName(directory, bag, 0),
+                        destinationDirectory,
+                        destinationFile,
                         null
                 );
                 continue;
@@ -299,35 +317,79 @@ public class App implements Runnable {
         return success;
     }
 
+    private String selectDestinationFile(Bag bag) {
+        String currentName = "";
+        String previousName = "";
+        int index = 1;
+        while (true) {
+            try {
+                if (this.optionKeep && previousName == "") {
+                    currentName = bag.path.getFileName().toString();
+                    continue;
+                }
+                currentName = formatName(this.format, bag, index++);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (currentName != "") {
+                    if (!Files.exists(Paths.get(bag.outputDirectory, currentName))) {
+                        break;
+                    }
+                }
+                if (previousName == currentName) {
+                    break;
+                } else {
+                    previousName = currentName;
+                }
+            }
+        }
+        return currentName;
+    }
+
     private boolean moveFile(String file) throws Exception {
         try {
-            String destination;
+            String destination = "";
             String directory = this.directory;
 
             Path path = Paths.get(file);
+
             Bag bag = createBag(path);
 
             directory = createDirectory(directory, bag);
 
-            boolean constant = !this.format.contains("{i}") && !this.format.contains("{number}");
-            if (constant) {
-                destination = formatName(this.format, bag, 0);
-                Path check = Paths.get(directory, destination);
-                if (Files.exists(check)) {
-                    System.out.println(String.format("Destination file exists %s", check.toString()));
-                    return false;
+            if (this.optionKeep) {
+                Path check = Paths.get(directory, bag.path.getFileName().toString());
+                if (!Files.exists(check)) {
+                    destination = check.getFileName().toString();
                 }
-            } else {
-                int n = 1;
-                while (true) {
-                    destination = formatName(this.format, bag, n);
-                    if (!Files.exists(Paths.get(directory, destination))) {
-                        break;
+            }
+
+            if (destination == "") {
+                boolean constant = !this.format.contains("{i}") && !this.format.contains("{number}");
+                if (constant) {
+                    destination = formatName(this.format, bag, 0);
+                    Path check = Paths.get(directory, destination);
+                    if (Files.exists(check)) {
+                        System.out.println(String.format("Destination file exists %s", check.toString()));
+                        return false;
                     }
-                    if (this.optionVerbose) {
-                        System.out.println(String.format("File exists %s", Paths.get(directory, destination)));
+                } else {
+                    String exists = "";
+                    int n = 1;
+                    while (true) {
+                        destination = formatName(this.format, bag, n);
+                        Path check = Paths.get(directory, destination);
+                        if (!Files.exists(check)) {
+                            break;
+                        }
+                        if (this.optionVerbose) {
+                            exists = check.toString();
+                        }
+                        n++;
                     }
-                    n++;
+                    if (exists.length() > 0) {
+                        System.out.println(String.format("File exists %s", exists));
+                    }
                 }
             }
             if (this.optionVerbose) {
@@ -354,7 +416,7 @@ public class App implements Runnable {
         }
     }
 
-    private Bag createBag(Path path) throws IOException {
+    private Bag createBag(Path path) throws Exception {
         String base = path.getParent().toString();
         String full = path.getFileName().toString();
         String name = full;
@@ -381,39 +443,49 @@ public class App implements Runnable {
             bag.time = Instant.now();
         }
 
+        if (this.directory == null) {
+            bag.outputDirectory = base;
+        } else {
+            bag.outputDirectory = formatName(directory, bag, 0);
+        }
+
         return bag;
     }
 
     private String createDirectory(String directory, Bag bag) throws Exception {
-        String current = directory;
-        if (current.length() == 0) {
-            current = FileSystems.getDefault().getPath(".").normalize().toAbsolutePath().toString();
+        directory = getDirectoryPath(directory, bag);
+        Path path = Paths.get(directory);
+        if (Files.exists(path)) {
+            if (!Files.isDirectory(path)) {
+                throw new Exception(String.format("Path exists and is not directory %s", directory));
+            }
         } else {
-            if (current.contains("{")) {
-                current = formatName(current, bag, 0);
+            Files.createDirectories(path);
+            if (optionVerbose) {
+                System.out.println(String.format("Created directory %s", directory));
+            }
+        }
+        return directory;
+    }
+
+    private String getDirectoryPath(String directory, Bag bag) throws Exception {
+        if (directory.length() == 0) {
+            directory = FileSystems.getDefault().getPath(".").normalize().toAbsolutePath().toString();
+        } else {
+            if (directory.contains("{")) {
+                directory = formatName(directory, bag, 0);
             }
             String absolutePath = "";
-            if (Paths.get(current).isAbsolute()) {
-                absolutePath = current;
+            if (Paths.get(directory).isAbsolute()) {
+                absolutePath = directory;
             } else if (this.optionRelative) {
-                absolutePath = Paths.get(bag.directory, current).normalize().toAbsolutePath().toString();
+                absolutePath = Paths.get(bag.directory, directory).normalize().toAbsolutePath().toString();
             } else {
-                absolutePath = FileSystems.getDefault().getPath(current).normalize().toAbsolutePath().toString();
+                absolutePath = FileSystems.getDefault().getPath(directory).normalize().toAbsolutePath().toString();
             }
-            Path path = Paths.get(absolutePath);
-            if (Files.exists(path)) {
-                if (!Files.isDirectory(path)) {
-                    throw new Exception(String.format("Path exists and is not directory %s", absolutePath));
-                }
-            } else {
-                Files.createDirectories(path);
-                if (optionVerbose) {
-                    System.out.println(String.format("Created directory %s", absolutePath));
-                }
-            }
-            current = absolutePath;
+            directory = absolutePath;
         }
-        return current;
+        return directory;
     }
 
 }

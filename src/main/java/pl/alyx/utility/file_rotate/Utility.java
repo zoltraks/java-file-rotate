@@ -26,4 +26,9 @@ public class Utility {
         return sb.toString();
     }
 
+    public static boolean isNotEmpty(String text) {
+        boolean result = text != null && text.trim().length() > 0;
+        return result;
+    }
+
 }

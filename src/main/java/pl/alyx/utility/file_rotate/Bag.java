@@ -20,6 +20,8 @@ public class Bag {
 
     private Instant modifiedTime;
 
+    public String outputDirectory;
+
     public Instant getModifiedTime() throws IOException {
         if (modifiedTime == null && name != null) {
             BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
@@ -44,6 +46,14 @@ public class Bag {
 
     public void setAccessTime(Instant accessTime) {
         this.accessTime = accessTime;
+    }
+
+    public String getOutputDirectory() {
+        return outputDirectory;
+    }
+
+    public void setOutputDirectory(String outputDirectory) {
+        this.outputDirectory = outputDirectory;
     }
 
 }

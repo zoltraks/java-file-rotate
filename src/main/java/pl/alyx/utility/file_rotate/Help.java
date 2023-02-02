@@ -29,6 +29,7 @@ public class Help {
         System.out.println("    -d, --directory  Destination directory for moved file (interpolated)");
         System.out.println("    -f, --format     Custom filename format (interpolated)");
         System.out.println("    -r, --relative   Use destination directory relative to file location");
+        System.out.println("    -k, --keep       Keep original file name if not exists in destination directory");
         System.out.println("    -m, --modified   Use file last modification time for DATE/TIME placeholders");
         System.out.println("    -a, --accesssed  Use file last accessed time for DATE/TIME placeholders");
         System.out.println("    -p, --pretend    Only print what is going to happen");

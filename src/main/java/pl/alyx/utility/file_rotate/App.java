@@ -63,14 +63,14 @@ public class App implements Runnable {
             String replacement = null;
             String group = m.group(1);
             switch (group) {
+                case "file":
+                    replacement = Utility.removeTrailingDot(bag.name + "." + bag.ext);
+                    break;
                 case "name":
                     replacement = bag.name;
                     break;
                 case "ext":
                     replacement = bag.ext;
-                    break;
-                case "full":
-                    replacement = bag.name + bag.ext;
                     break;
                 case "dir":
                     replacement = bag.directory;
@@ -424,7 +424,7 @@ public class App implements Runnable {
         if (full.contains(".")) {
             int p = full.lastIndexOf(".");
             name = full.substring(0, p);
-            ext = full.substring(p);
+            ext = full.substring(p + 1);
         }
 
         Bag bag = new Bag();

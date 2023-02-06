@@ -3,7 +3,11 @@ package pl.alyx.utility.file_rotate;
 public class Utility {
 
     public static boolean hasWildcards(String text) {
-        return text.indexOf('*') >= 0 || text.indexOf('?') >= 0;
+        if (text == null || text.length() == 0) {
+            return false;
+        } else {
+            return text.indexOf('*') >= 0 || text.indexOf('?') >= 0;
+        }
     }
 
     public static String wildToExpression(String text) {
@@ -29,6 +33,25 @@ public class Utility {
     public static boolean isNotEmpty(String text) {
         boolean result = text != null && text.trim().length() > 0;
         return result;
+    }
+
+    public static String removeTrailingDot(String text) {
+        if (text == null || text.length() == 0) {
+            return text;
+        }
+        if (text.endsWith(".")) {
+            return text.substring(0, text.length() - 1);
+        } else {
+            return text;
+        }
+    }
+
+    public static String removeAllTrailingDots(String text) {
+        if (text == null || text.length() == 0) {
+            return text;
+        } else {
+            return text.replace("\\.+$", "");
+        }
     }
 
 }

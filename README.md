@@ -1,3 +1,4 @@
+
 # File rotation utility
 
 This program will rotate file by moving it to new incremental name.
@@ -13,7 +14,7 @@ This program requires Java >= 8 to run.
 ## Author
 
 ```
-Filip Golewski 2022-2023
+Filip Golewski 2022,2023
 ```
 
 ## Usage
@@ -37,8 +38,10 @@ java -jar file-rotate.jar OPTIONS... file
     -d, --directory  Destination directory for moved file (interpolated)
     -f, --format     Custom filename format (interpolated)
     -r, --relative   Use destination directory relative to file location
+    -k, --keep       Keep original file name if it not exists in destination directory
     -m, --modified   Use file last modification time for DATE/TIME placeholders
     -a, --accesssed  Use file last accessed time for DATE/TIME placeholders
+    -p, --pretend    Only print what is going to happen
     -V, --version    Print version information
     -h, --help       Print this screen
 
@@ -46,10 +49,10 @@ java -jar file-rotate.jar OPTIONS... file
 
 Destination directory and filename format options can use following placeholders.
 
+    {file}              Filename with extension
     {name}              Filename without extension
-    {ext}               Extension with leading dot
-    {full}              Filename with extension
-    {dir}               File directory
+    {ext}               Extension without leading dot
+    {dir}               Directory
     {i},{number}        Incremental number
     {YYYY},{YEAR}       4-digit year number
     {MM},{MONTH}        2-digit month number
@@ -64,10 +67,6 @@ Destination directory and filename format options can use following placeholders
 
 Wildcards are supported only in file names.
 
-```
-file-rotate *.log
-```
-
 ## Example
 
 ```
@@ -75,15 +74,23 @@ file-rotate log.txt
 ```
 
 ```
-file-rotate log.txt -f {name}-{YY}{MM}{DD}-{number}{ext}
+file-rotate *.log -p
 ```
 
 ```
-file-rotate log.txt -f {YYYY}-{MM}-{DD}-{full}
+file-rotate *.log -k -p -d backup
 ```
 
 ```
-file-rotate log.txt -d {YYYY}-{MM}/{DD} -f {name}_{hh}{mm}{ss}_{ms}{ext}
+file-rotate log.txt -f {name}-{YY}{MM}{DD}-{number}.{ext}
+```
+
+```
+file-rotate log.txt -f {YYYY}-{MM}-{DD}-{file}
+```
+
+```
+file-rotate log.txt -d {YYYY}-{MM}/{DD} -f {name}_{hh}{mm}{ss}_{ms}.{ext}
 ```
 
 ```

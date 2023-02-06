@@ -3,6 +3,7 @@ package pl.alyx.utility.file_rotate;
 public class Help {
 
     public static void print() {
+        System.out.println("");
         System.out.println("File rotation utility");
         System.out.println("");
         System.out.println("This program will rotate file by moving it to new incremental name.");
@@ -13,11 +14,12 @@ public class Help {
         System.out.println("");
         System.out.println("AUTHOR");
         System.out.println("");
-        System.out.println("    Filip Golewski 2022 2023");
+        System.out.println("    Filip Golewski 2022,2023");
         System.out.println("");
         System.out.println("USAGE");
         System.out.println("");
         System.out.println("Set valid JAVA_HOME environment variable and path to java command in PATH`` variable.");
+        System.out.println("");
         System.out.println("    java -jar file-rotate.jar OPTIONS... file");
         System.out.println("");
         System.out.println("    .\\file-rotate.cmd OPTIONS... file");
@@ -29,7 +31,7 @@ public class Help {
         System.out.println("    -d, --directory  Destination directory for moved file (interpolated)");
         System.out.println("    -f, --format     Custom filename format (interpolated)");
         System.out.println("    -r, --relative   Use destination directory relative to file location");
-        System.out.println("    -k, --keep       Keep original file name if not exists in destination directory");
+        System.out.println("    -k, --keep       Keep original file name if it not exists in destination directory");
         System.out.println("    -m, --modified   Use file last modification time for DATE/TIME placeholders");
         System.out.println("    -a, --accesssed  Use file last accessed time for DATE/TIME placeholders");
         System.out.println("    -p, --pretend    Only print what is going to happen");
@@ -40,10 +42,10 @@ public class Help {
         System.out.println("");
         System.out.println("Destination directory and filename format options can use following placeholders.");
         System.out.println("");
+        System.out.println("    {file}              Filename with extension");
         System.out.println("    {name}              Filename without extension");
-        System.out.println("    {ext}               Extension with leading dot");
-        System.out.println("    {full}              Filename with extension");
-        System.out.println("    {dir}               File directory");
+        System.out.println("    {ext}               Extension without leading dot");
+        System.out.println("    {dir}               Directory");
         System.out.println("    {i},{number}        Incremental number");
         System.out.println("    {YYYY},{YEAR}       4-digit year number");
         System.out.println("    {MM},{MONTH}        2-digit month number");
@@ -54,13 +56,19 @@ public class Help {
         System.out.println("    {ms},{MILLISECOND}  3-digit milisecond");
         System.out.println("    {ns},{NANOSECOND}   9-digit nanosecond");
         System.out.println("");
+        System.out.println("WILDCARDS");
+        System.out.println("");
+        System.out.println("Wildcards are supported only in file names.");
+        System.out.println("");
         System.out.println("EXAMPLE");
         System.out.println("");
         System.out.println("    file-rotate log.txt");
+        System.out.println("    file-rotate *.log -p");
+        System.out.println("    file-rotate *.log -k -p -d backup");
         System.out.println("");
-        System.out.println("    file-rotate log.txt -f {name}-{YY}{MM}{DD}-{number}{ext}");
-        System.out.println("    file-rotate log.txt -f {YYYY}-{MM}-{DD}-{full}");
-        System.out.println("    file-rotate log.txt -d {YYYY}-{MM}/{DD} -f {name}_{hh}{mm}{ss}_{ms}{ext}");
+        System.out.println("    file-rotate log.txt -f {name}-{YY}{MM}{DD}-{number}.{ext}");
+        System.out.println("    file-rotate log.txt -f {YYYY}-{MM}-{DD}-{file}");
+        System.out.println("    file-rotate log.txt -d {YYYY}-{MM}/{DD} -f {name}_{hh}{mm}{ss}_{ms}.{ext}");
         System.out.println("");
         System.out.println("    file-rotate dir1/log.txt dir2/log.txt -d old -r");
         System.out.println("");

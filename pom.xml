@@ -6,7 +6,7 @@
 
     <groupId>pl.alyx.utility</groupId>
     <artifactId>file-rotate</artifactId>
-    <version>1.3</version>
+    <version>1.5</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -65,7 +65,12 @@
     </build>
 
     <dependencies>
-
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

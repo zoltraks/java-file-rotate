@@ -1,7 +1,7 @@
 
 # File rotation utility
 
-This program rotates files by moving them to archive location with incremental names.
+This program move files to another location with incremental names.
 
 If the target file exists and is a symbolic link, then the symbolic link itself, not the target of the link, is replaced.
 
